@@ -57,8 +57,8 @@ class BulletWorld:
 
     def preallocate_trajectories(self, n_steps):
         for obj in self.objects.values():
-            obj.xyz_trajectory = np.zeros((n_steps, 3))
-            obj.euler_angles_trajectory = np.zeros((n_steps, 3))
+            obj.xyz_trajectory = np.zeros((n_steps+1, 3))
+            obj.euler_angles_trajectory = np.zeros((n_steps+1, 3))
         self.step = 0
         self.n_steps = n_steps
 
