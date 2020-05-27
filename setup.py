@@ -15,6 +15,7 @@ setup(name='bpybullet',
       author='Tobias Lemke',
       url="",
       packages=['bpybullet'],
-      install_requires=[],
+      install_requires=["numpy",
+                        "pybullet"],
       classifiers=[])
 
