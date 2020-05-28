@@ -3,7 +3,6 @@ import bpy
 import bpybullet
 import bmesh
 
-
 # create a sphere:
 mesh = bpy.data.meshes.new("sphere")
 bpy_sphere = bpy.data.objects.new("sphere", mesh)
@@ -36,13 +35,10 @@ physics_cube = bullet_world.add_as_mesh(bpy_cube, mass=0)  # mass=0 --> will not
 physics_cube.change_dynamics(restitution=1)
 
 # run simulation and set the result as keyframes:
-bullet_world.simulate(n_steps=2000, record_contacts=True)
+bullet_world.simulate(n_steps=2000, record_contacts=True, contact_force_record_threshold=10)
 bullet_world.set_keyframes(sub_step=8)  # will only set every 8th frame of the simulation as frame in blender
 
 # print some information about the occurring collisions:
-for frame, contacts in enumerate(bullet_world.contact_history):
+for contacts in bullet_world.contact_history:
     for contact in contacts:
-        if contact.normal_force > 10:
-            print(f"Collsion in frame {frame} with a force of {contact.normal_force}")
-
-
+        print(f"Collision in step {contact.step} with a force of {contact.normal_force}")
