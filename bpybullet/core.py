@@ -22,6 +22,15 @@ class PhysicsObject:
             orientation = pybullet.getQuaternionFromEuler(self.bpy_object.rotation_euler)
         pybullet.resetBasePositionAndOrientation(self.bullet_object_id, position, orientation)
 
+    def get_collision_partner_id(self, collision):
+        if self.bullet_object_id == collision.body_unique_id_a:
+            partner_id = collision.body_unique_id_b
+        elif self.bullet_object_id == collision.body_unique_id_b:
+            partner_id = collision.body_unique_id_a
+        else:
+            raise ValueError("not a collision of this object!")
+        return partner_id
+
 
 class ContactPoint:
     def __init__(self, contact_info, step=None):
