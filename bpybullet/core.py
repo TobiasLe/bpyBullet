@@ -15,6 +15,13 @@ class PhysicsObject:
     def change_dynamics(self, **kwargs):
         pybullet.changeDynamics(self.bullet_object_id, linkIndex=-1, **kwargs)
 
+    def reset_base_position_and_orientation(self, position=None, orientation=None):
+        if position is None:
+            position = self.bpy_object.location
+        if orientation is None:
+            orientation = pybullet.getQuaternionFromEuler(self.bpy_object.rotation_euler)
+        pybullet.resetBasePositionAndOrientation(self.bullet_object_id, position, orientation)
+
 
 class ContactPoint:
     def __init__(self, contact_info, step=None):
@@ -103,6 +110,15 @@ class BulletWorld:
             obj.xyz_trajectory[self.step] = position
             obj.euler_angles_trajectory[self.step] = pybullet.getEulerFromQuaternion(orientation)
 
+    def record_contacts(self, contact_force_record_threshold=0):
+        contacts = [ContactPoint(contact, self.step) for contact in
+                    pybullet.getContactPoints(physicsClientId=self.physics_client_id)
+                    if contact[9] > contact_force_record_threshold]
+        self.contact_history.append(contacts)
+        for contact in contacts:
+            for id in (contact.body_unique_id_a, contact.body_unique_id_b):
+                self.objects_by_bullet_id[id].contacts.append(contact)
+
     def simulate(self, n_steps, record_contacts=False, contact_force_record_threshold=0):
         self.preallocate_trajectories(n_steps)
 
@@ -111,13 +127,7 @@ class BulletWorld:
             self.write_step_to_trajectories()
 
             if record_contacts:
-                contacts = [ContactPoint(contact, self.step) for contact in
-                            pybullet.getContactPoints(physicsClientId=self.physics_client_id)
-                            if contact[9] > contact_force_record_threshold]
-                self.contact_history.append(contacts)
-                for contact in contacts:
-                    for id in (contact.body_unique_id_a, contact.body_unique_id_b):
-                        self.objects_by_bullet_id[id].contacts.append(contact)
+                self.record_contacts(contact_force_record_threshold)
 
     def set_keyframes(self, sub_step=1):
         for i in range(int(self.n_steps / sub_step)):
