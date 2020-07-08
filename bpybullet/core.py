@@ -1,6 +1,7 @@
 import pybullet
 import bmesh
 import numpy as np
+import bpy
 
 
 class PhysicsObject:
@@ -138,15 +139,25 @@ class BulletWorld:
             if record_contacts:
                 self.record_contacts(contact_force_record_threshold)
 
-    def set_keyframes(self, sub_step=1):
-        for i in range(int(self.n_steps / sub_step)):
-            for obj in self.objects:
-                obj.bpy_object.location = obj.xyz_trajectory[i * sub_step]
-                obj.bpy_object.keyframe_insert(data_path="location", frame=i)
+    def set_keyframes(self, sub_step=1, as_samples=False):
+        n_frames = int(self.n_steps / sub_step) + 1
+        frames = np.arange(n_frames)
+        for obj in self.objects:
+            obj.bpy_object.animation_data_create()
+            action = bpy.data.actions.new(obj.bpy_object.name + "_act")
+            obj.bpy_object.animation_data.action = action
+            for i in range(3):
+                fcurve = action.fcurves.new("location", index=i)
+                fcurve.keyframe_points.add(n_frames)
+                frame_data = np.column_stack((frames, obj.xyz_trajectory[::sub_step, i]))
+                fcurve.keyframe_points.foreach_set("co", frame_data.flatten())
+                if as_samples:
+                    fcurve.convert_to_samples(0, n_frames)
 
-                obj.bpy_object.rotation_euler = obj.euler_angles_trajectory[i * sub_step]
-                obj.bpy_object.keyframe_insert(data_path="rotation_euler", frame=i)
-
-                for fcurve in obj.bpy_object.animation_data.action.fcurves:
-                    kf = fcurve.keyframe_points[-1]
-                    kf.interpolation = 'CONSTANT'
+            for i in range(3):
+                fcurve = action.fcurves.new("rotation_euler", index=i)
+                fcurve.keyframe_points.add(n_frames)
+                frame_data = np.column_stack((frames, obj.euler_angles_trajectory[::sub_step, i]))
+                fcurve.keyframe_points.foreach_set("co", frame_data.flatten())
+                if as_samples:
+                    fcurve.convert_to_samples(0, n_frames)
