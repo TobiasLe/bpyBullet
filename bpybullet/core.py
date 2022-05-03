@@ -62,7 +62,6 @@ class BulletWorld:
         self.objects_by_bullet_id = {}
         self.n_steps = 0
         self.step = 0
-        self.contact_history = []
 
     def add_physics_object(self, physics_object):
         self.objects.append(physics_object)
@@ -120,14 +119,15 @@ class BulletWorld:
             obj.xyz_trajectory[self.step] = position
             obj.euler_angles_trajectory[self.step] = pybullet.getEulerFromQuaternion(orientation)
 
-    def record_contacts(self, contact_force_record_threshold=0):
+    def record_contacts(self, contact_force_record_threshold=0, max_n_contacts=float("inf")):
         contacts = [ContactPoint(contact, self.step) for contact in
                     pybullet.getContactPoints(physicsClientId=self.physics_client_id)
                     if contact[9] > contact_force_record_threshold]
-        self.contact_history.append(contacts)
         for contact in contacts:
             for id in (contact.body_unique_id_a, contact.body_unique_id_b):
-                self.objects_by_bullet_id[id].contacts.append(contact)
+                obj_contacts = self.objects_by_bullet_id[id].contacts
+                if len(obj_contacts) < max_n_contacts:
+                    obj_contacts.append(contact)
 
     def simulate(self, n_steps, record_contacts=False, contact_force_record_threshold=0):
         self.preallocate_trajectories(n_steps)

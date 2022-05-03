@@ -8,7 +8,7 @@ mesh = bpy.data.meshes.new("sphere")
 bpy_sphere = bpy.data.objects.new("sphere", mesh)
 bpy.context.scene.collection.objects.link(bpy_sphere)
 bm = bmesh.new()
-bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
+bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, radius=0.5)
 bm.to_mesh(mesh)
 bm.free()
 
